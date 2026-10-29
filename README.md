@@ -28,7 +28,7 @@ Key Press Detection reads the on-screen keys and saves a timestamped TXT score. 
 
 </div>
 
-<sub>The video and GIF show seconds 47 to 58 of the performance at 1.25× speed. Highlights and key labels come from actual inference. The UID is covered, and the TXT keeps the original playing speed with timestamps relative to the clip.</sub>
+
 
 ## Features
 
