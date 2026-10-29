@@ -1,0 +1,14 @@
+Key Press Detection includes an application-local Python runtime and third-party packages.
+
+Python: Python Software Foundation License. See runtime/LICENSE.txt.
+The CUDA edition includes PyTorch and Torchvision; their licenses and notices are retained in the installed distributions.
+PyAV and its bundled FFmpeg libraries: see av's installed distribution license files.
+NumPy, Pillow, and all transitive dependencies: see the respective *.dist-info/licenses directories.
+Microsoft Visual C++ runtime DLLs: Microsoft copyright and redistribution terms apply.
+ONNX and ONNX Runtime DirectML: licenses and third-party notices are retained in their installed packages and dist-info metadata. DirectML.dll redistribution terms are included with onnxruntime-directml.
+Protobuf, ml_dtypes, flatbuffers, packaging, coloredlogs, humanfriendly, and pyreadline3: see installed distribution licenses and metadata.
+
+The bundled ONNX models contain the application inference weights. Shared external weight files must stay beside the model graphs.
+No COCO training weights are bundled or downloaded automatically.
+
+No third-party fonts, JavaScript CDNs, web analytics, or external inference services are used.

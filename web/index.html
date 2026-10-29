@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light"><meta name="theme-color" content="#4f5872">
+  <title>Key Press Detection</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css"><script src="./locales.js" defer></script><script src="./i18n.js" defer></script><script src="./elapsed.js" defer></script><script src="./regions.js" defer></script><script src="./app.js" defer></script>
+</head>
+<body>
+<header class="app-nav">
+  <span class="brand" data-i18n-ignore>Key Press Detection</span>
+  <nav aria-label="Navigation">
+    <button class="nav-item active" data-page="inference"><span data-icon="scan"></span>Inference</button>
+    <button class="nav-item" data-page="simulator"><span data-icon="keyboard"></span>Simulator</button>
+    <button class="nav-item" data-page="converter"><span data-icon="layers"></span>Score conversion</button>
+    <button class="nav-item" data-page="scores"><span data-icon="folder"></span>Score manager</button>
+    <button class="nav-item" data-page="history"><span data-icon="history"></span>History<span class="nav-count" id="history-count">0</span></button>
+  </nav>
+  <div class="nav-end">
+    <button id="active-task" class="active-task hidden"><span class="live-dot"></span><span id="active-task-label" data-i18n-ignore>Job running</span><span data-icon="arrow"></span></button>
+    <button class="nav-item" data-page="settings"><span data-icon="sliders"></span>Settings</button>
+    <div class="local-status"><span class="status-dot" id="connection-dot"></span><span id="connection-label" data-i18n-ignore>Connecting</span></div>
+  </div>
+</header>
+<main>
+  <header class="topbar"><span id="breadcrumb" data-i18n-ignore>Inference</span><button class="model-pill" data-page="settings" title="Model settings"><span>Model</span><b id="model-name" data-i18n-ignore>faster_rcnn.onnx</b><span data-icon="chevron"></span></button><div class="hardware-badge"><span class="status-dot" id="hardware-dot"></span><span id="hardware-label" data-i18n-ignore>Detecting device…</span></div><button id="language-toggle" class="language-toggle" type="button" data-i18n-ignore aria-label="Switch to English">English</button></header>
+  <div id="connection-banner" class="notice error hidden" role="alert">Server disconnected. Run start.cmd and refresh this page.</div>
+  <section class="page" id="page-inference">
+    <div class="workspace">
+      <form id="inference-form" class="control-panel">
+        <div class="panel-heading"><h2>Inference parameters</h2></div>
+        <label for="video-path">Video file</label>
+        <div class="path-input"><input id="video-path" placeholder="Video path" required autocomplete="off"><button type="button" class="icon-button" data-pick="video-path" data-kind="video" aria-label="Select video"><span data-icon="folder"></span></button></div>
+        <button type="button" class="text-button" id="load-video"><span data-icon="image"></span>Load preview</button>
+        <label for="output-dir">Output directory</label>
+        <div class="path-input"><input id="output-dir" value="runs" required><button type="button" class="icon-button" data-pick="output-dir" data-kind="directory" aria-label="Select output directory"><span data-icon="folder"></span></button></div>
+        <div class="form-divider"></div>
+        <div class="label-row"><label for="threshold">Confidence threshold</label><output id="threshold-value">0.80</output></div>
+        <input type="range" id="threshold" min="0.1" max="0.99" step="0.01" value="0.8">
+        <div class="form-grid"><div><label for="batch-size">Batch size</label><select id="batch-size"><option value="1">1</option><option value="16">16</option></select><input id="cuda-batch-size" class="hidden" type="number" min="1" max="256" step="1" value="16"></div><div><label for="stride">Frame stride</label><select id="stride"><option value="1">Every frame</option><option value="2">Every 2 frames</option><option value="3">Every 3 frames</option><option value="5">Every 5 frames</option><option value="10">Every 10 frames</option></select></div></div>
+        <details class="advanced"><summary>Advanced<span data-icon="chevron"></span></summary>
+          <label for="debounce-ms">Same-key debounce (ms)</label><input id="debounce-ms" type="number" min="0" max="500" value="50" step="1">
+          <label for="infer-min-size">Input short edge</label><select id="infer-min-size"><option value="800">800 px</option><option value="640">640 px</option><option value="480">480 px</option></select><p class="field-hint">Smaller inputs or skipped frames may miss detections.</p>
+          <label id="cuda-amp-row" class="switch-row hidden"><span>Mixed precision (AMP)<small>CUDA</small></span><input type="checkbox" id="infer-amp" checked role="switch"></label>
+          <button type="button" class="secondary full" id="edit-regions"><span data-icon="crop"></span>Edit ROI / key regions</button>
+        </details>
+        <button class="primary full start-button" type="submit" id="start-inference"><span data-icon="play"></span>Run inference</button>
+        
+      </form>
+      <div class="stage-column">
+        <div class="preview-panel">
+          <div class="panel-heading"><h2><span data-icon="image"></span>Video preview</h2><span class="subtle" id="video-meta" data-i18n-ignore>Not loaded</span></div>
+          <div class="preview-stage" id="preview-stage">
+            <div id="empty-preview" class="empty-preview"><span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 134 58"><g class="dots"><circle cx="10" cy="10" r="6.5"/><circle cx="29" cy="10" r="6.5"/><circle cx="48" cy="10" r="6.5"/><circle cx="67" cy="10" r="6.5"/><circle cx="86" cy="10" r="6.5"/><circle class="on" cx="105" cy="10" r="6.5"/><circle cx="124" cy="10" r="6.5"/><circle cx="10" cy="29" r="6.5"/><circle cx="29" cy="29" r="6.5"/><circle class="on" cx="48" cy="29" r="6.5"/><circle cx="67" cy="29" r="6.5"/><circle cx="86" cy="29" r="6.5"/><circle cx="105" cy="29" r="6.5"/><circle cx="124" cy="29" r="6.5"/><circle cx="10" cy="48" r="6.5"/><circle cx="29" cy="48" r="6.5"/><circle cx="48" cy="48" r="6.5"/><circle cx="67" cy="48" r="6.5"/><circle class="on" cx="86" cy="48" r="6.5"/><circle cx="105" cy="48" r="6.5"/><circle cx="124" cy="48" r="6.5"/></g></svg></span><p>Select a video to show its first frame and check the key regions.</p><button type="button" class="secondary" data-pick="video-path" data-kind="video"><span data-icon="plus"></span>Select video</button></div>
+            <img id="video-preview" class="hidden" alt="Video preview frame">
+            <div class="preview-caption hidden" id="preview-caption"><span class="live-dot"></span><span id="preview-caption-text" data-i18n-ignore>First frame loaded</span></div>
+          </div>
+          <p id="inference-device" class="field-hint" data-i18n-ignore></p><div class="keyboard-section"><div class="label-row"><span>Key state</span><div class="key-tools"><button type="button" class="text-button" id="move-regions"><span data-icon="crop"></span>Move key regions</button><span class="key-legend"><i></i>Pressed</span></div></div><div class="keyboard" id="keyboard"></div><div class="keyboard-footnote" id="keyboard-footnote" data-i18n-ignore></div></div>
+        </div>
+        <div id="inference-job" class="job-panel hidden">
+          <div class="panel-heading"><h2 id="infer-stage" data-i18n-ignore>Preparing</h2><button class="danger-text" id="stop-inference" type="button"><span data-icon="stop"></span>Stop and discard results</button></div>
+          <div class="progress-track"><div id="infer-progress"></div></div><div class="progress-label"><span id="infer-progress-label" data-i18n-ignore>0%</span><span id="infer-eta" data-i18n-ignore>Preparing</span></div>
+          <div class="metrics-grid"><div><small>Frames</small><strong id="metric-frames">—</strong></div><div><small>Frames / s</small><strong id="metric-fps">—</strong></div><div><small>Key events</small><strong id="metric-events">—</strong></div><div><small>Elapsed</small><strong id="metric-time">—</strong></div></div>
+          <div class="task-error notice error hidden" id="infer-error" data-i18n-ignore role="alert"></div>
+          <div class="result-actions" id="infer-artifacts" data-i18n-ignore></div>
+        </div>
+        <div class="timeline-panel"><div class="panel-heading"><h2><span data-icon="timeline"></span>Detections</h2><span class="subtle">Last 80 entries</span></div><div id="events-empty" class="empty-line">No detections</div><div class="event-table hidden" id="events-table"><table><thead><tr><th>Video time</th><th>Keys</th></tr></thead><tbody id="events-body" data-i18n-ignore></tbody></table></div></div>
+        <details class="log-panel hidden" id="infer-log-panel"><summary>Runtime log<span data-icon="chevron"></span></summary><div class="log-output" id="infer-logs" data-i18n-ignore role="log"></div></details>
+      </div>
+    </div>
+  </section>
+  <section class="page hidden" id="page-simulator">
+    <div class="simulator-panel">
+      <div class="panel-heading"><h2>TXT score</h2><button type="button" class="text-button" id="refresh-scores"><span data-icon="refresh"></span>Refresh</button></div>
+      <label for="score-directory">Output directory</label>
+      <div class="path-input"><input id="score-directory" value="runs"><button type="button" class="icon-button" data-pick="score-directory" data-kind="directory" aria-label="Select output directory"><span data-icon="folder"></span></button></div>
+      <label for="score-select">Select TXT</label>
+      <select id="score-select" data-i18n-ignore><option value="">—</option></select>
+      <div class="score-upload-row"><label class="secondary upload-button" for="score-upload"><span data-icon="plus"></span>Upload TXT</label><input type="file" id="score-upload" accept=".txt,text/plain" class="score-upload"><span id="score-file" class="score-file" data-i18n-ignore></span></div>
+      <div class="form-divider"></div>
+      <button type="button" class="primary" id="launch-simulator"><span data-icon="keyboard"></span>Open simulator</button>
+      
+      <p id="simulator-result" class="simulator-result hidden" data-i18n-ignore role="status"></p>
+    </div>
+  </section>
+  <section class="page hidden" id="page-scores">
+    <div class="simulator-panel library-panel">
+      <div class="panel-heading panel-tools"><button id="library-refresh" class="text-button" type="button"><span data-icon="refresh"></span>Refresh</button></div>
+      <label for="library-directory">Score directory</label><div class="path-input"><input id="library-directory" value="runs"><button type="button" class="icon-button" data-pick="library-directory" data-kind="directory" aria-label="Select score directory"><span data-icon="folder"></span></button></div>
+      <div class="library-toolbar"><button id="library-output" type="button" class="secondary">Output directory</button><button id="library-uploads" type="button" class="secondary">Uploads folder</button><input id="library-search" type="search" placeholder="Search filenames" aria-label="Search filenames"></div>
+      <div class="library-actions"><label class="library-check"><input id="library-all" type="checkbox"><span>Select all listed folders</span></label><span id="library-count" data-i18n-ignore aria-live="polite"></span><button id="library-delete" type="button" class="secondary danger" disabled>Delete folders</button></div>
+      <div id="library-files" class="library-files" data-i18n-ignore></div>
+      
+    </div>
+  </section>
+  <section class="page hidden" id="page-history"><div class="page-toolbar"><button class="secondary" id="refresh-history"><span data-icon="refresh"></span>Refresh</button></div><div class="history-panel" id="history-list" data-i18n-ignore></div></section>
+  <section class="page hidden" id="page-converter">
+    <div class="simulator-panel converter-panel">
+      <div class="panel-heading panel-tools"><button id="refresh-convert" class="text-button" type="button"><span data-icon="refresh"></span>Refresh</button></div>
+      <div class="converter-columns">
+        <div class="converter-form">
+          <label for="convert-directory">Score directory</label><div class="path-input"><input id="convert-directory" value="runs"><button type="button" class="icon-button" data-pick="convert-directory" data-kind="directory" aria-label="Select score directory"><span data-icon="folder"></span></button></div>
+          <label for="convert-select">TXT score</label><select id="convert-select"></select>
+          <div class="score-upload-row"><label for="convert-upload" class="secondary"><span data-icon="plus"></span>Upload TXT</label><input id="convert-upload" type="file" accept=".txt,text/plain" class="hidden"><span id="convert-file" class="score-file" data-i18n-ignore></span></div>
+          <div class="form-divider"></div>
+          <label for="convert-format">Format</label><select id="convert-format"><option value="fingertip">Fingertip score</option></select>
+          <div class="form-grid converter-grid">
+            <div><label for="convert-bpm">BPM (quarter note)</label><input id="convert-bpm" type="number" min="20" max="400" step="0.01" value="120"></div>
+            <div><label for="convert-beats">Time signature</label><div class="meter-input"><input id="convert-beats" type="number" min="1" max="16" step="1" value="4"><span>/</span><select id="convert-denominator"><option>2</option><option selected>4</option><option>8</option><option>16</option></select></div></div>
+            <div><label for="convert-start">First bar start (seconds)</label><input id="convert-start" type="number" min="0" max="86400" step="0.01" value="0"></div>
+            <div><label for="convert-line">Bars per line</label><input id="convert-line" type="number" min="1" max="16" step="1" value="4"></div>
+          </div>
+          <div class="converter-actions"><button id="convert-score" class="primary" type="button"><span data-icon="layers"></span>Convert preview</button><button id="download-converted" class="secondary" type="button" disabled><span data-icon="download"></span>Download converted TXT</button></div>
+        </div>
+        <div class="converter-output">
+          <div class="label-row"><label for="converted-text">Converted score</label><span id="convert-stats" data-i18n-ignore></span></div>
+          <textarea id="converted-text" rows="12" spellcheck="false" aria-label="Converted score"></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="page hidden" id="page-settings"><div class="settings-layout"><form id="settings-form" class="settings-panel"><h2>Model and device</h2><label for="default-model">Default model</label><div class="path-input"><input id="default-model" required><button type="button" class="icon-button" data-pick="default-model" data-kind="model" aria-label="Select default model"><span data-icon="folder"></span></button></div><label for="device-select">Device</label><select id="device-select"><option value="auto">Auto · Prefer GPU</option><option id="cuda-device-option" value="cuda" hidden disabled>NVIDIA GPU (CUDA)</option><option value="directml">NVIDIA / AMD / Intel GPU (DirectML)</option><option value="cpu">CPU</option></select><label for="directml-adapter">DirectML adapter</label><select id="directml-adapter" data-i18n-ignore></select><label for="directml-precision">DirectML precision</label><select id="directml-precision"><option value="fp32">FP32 (default)</option><option value="fp16_mixed">FP16 mixed precision</option></select><div class="label-row"><label for="cpu-threads">CPU threads</label><output id="cpu-threads-value" data-i18n-ignore></output></div><input id="cpu-threads" type="range" min="0" max="24" value="0" step="1"><p class="field-hint">0 = Auto</p><label id="cuda-tf32-row" class="switch-row hidden"><span>Allow TF32</span><input type="checkbox" id="tf32" role="switch"></label><button class="primary" type="submit"><span data-icon="save"></span>Save settings</button></form><div class="settings-panel"><h2>Environment</h2><dl class="environment-list" id="environment-list" data-i18n-ignore></dl></div></div></section>
+</main>
+<div id="toast" data-i18n-ignore class="toast hidden" role="status"></div>
+<dialog id="region-dialog"><div class="dialog-header"><div><h2>Detection regions</h2></div><button type="button" class="icon-button" id="close-regions" aria-label="Close region editor"><span data-icon="close"></span></button></div><div class="region-toolbar"><label for="region-select">Region</label><select id="region-select"><option value="roi">Crop ROI</option></select><select id="region-mode" aria-label="Edit mode"><option value="move">Move</option><option value="draw">Draw</option></select><span id="region-resolution"></span></div><div class="region-canvas-wrap"><canvas id="region-canvas" aria-label="Drag to draw a key region"></canvas></div><div class="region-values"><label>X1<input type="number" id="region-x1" min="0"></label><label>Y1<input type="number" id="region-y1" min="0"></label><label>X2<input type="number" id="region-x2" min="1"></label><label>Y2<input type="number" id="region-y2" min="1"></label></div><div class="dialog-footer"><button class="secondary" id="reset-regions" type="button">Reset positions</button><button class="primary" id="save-regions" type="button"><span data-icon="check"></span>Save regions</button></div></dialog>
+</body></html>
