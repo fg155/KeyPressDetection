@@ -32,7 +32,7 @@ def app_files(root=ROOT):
 
 def source_files(root=ROOT):
     return app_files(root)+[root/n for n in SOURCE_FILES]+[
-        p for folder in ('tests','tools') for p in (root/folder).iterdir() if p.suffix in ('.py','.js','.ps1')]
+        p for folder in ('tests','tools') for p in (root/folder).iterdir() if p.suffix in ('.py','.js','.ps1','.cmd')]
 
 
 def private_markers(root=ROOT, other_roots=()):
@@ -186,8 +186,7 @@ def main():
             from split_release import split
             split(path)
             import shutil
-            shutil.copyfile(ROOT/'tools/join-release.ps1',path.parent/'join-release.ps1')
-            (path.parent/'join-release.cmd').write_text('@echo off\npowershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0join-release.ps1" -Manifest "%~dp0'+path.name+'.parts.json"\nif errorlevel 1 pause\n','ascii')
+            shutil.copyfile(ROOT/'tools/join-release.cmd',path.parent/'join-release.cmd')
 
 
 if __name__=='__main__':main()

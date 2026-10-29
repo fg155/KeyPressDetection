@@ -73,7 +73,7 @@ Choose a Windows x64 portable package from Releases:
 3. Check the key regions. Move boxes or click keys to disable them, then start inference.
 
 > [!TIP]
-> If you downloaded the split CUDA package, run `join-release.cmd` first to merge the parts.
+> For the split CUDA download, put `.part001`, `.part002`, `.parts.json` and `join-release.cmd` in the same folder. Double-click `join-release.cmd` to merge and verify the ZIP, then extract it.
 
 ### System requirements
 

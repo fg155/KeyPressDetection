@@ -73,7 +73,7 @@ flowchart LR
 3. 检查键位框，按需移动位置或点击禁用某些键，然后开始识别。
 
 > [!TIP]
-> 下载的是 CUDA 分卷包时，先运行 `join-release.cmd` 合并。
+> 下载 CUDA 分卷包时，将 `.part001`、`.part002`、`.parts.json` 和 `join-release.cmd` 放在同一文件夹。双击 `join-release.cmd` 合并并校验 ZIP，完成后再解压。
 
 ### 系统要求
 

@@ -30,7 +30,7 @@ python tools/package_release.py --kind portable --edition directml --runtime C:\
 python tools/package_release.py --kind portable --edition cuda --runtime C:\build\runtime-cuda --models C:\build\models --checkpoint C:\build\faster_rcnn.pth --output dist --split
 ```
 
-将输入路径换成实际目录。权重放在模型目录中时，可以省略 `--checkpoint`。便携 ZIP 达到 2 GiB 时，`--split` 会生成分卷、清单和合并脚本。
+将输入路径换成实际目录。权重放在模型目录中时，可以省略 `--checkpoint`。便携 ZIP 达到 2 GiB 时，`--split` 会生成分卷、`.parts.json` 清单和单个 `join-release.cmd` 脚本。将这些文件放在同一文件夹，双击脚本即可合并并校验 ZIP。
 
 `--kind models` 只打包模型，`--model-format` 可选 `onnx`、`pytorch` 或 `both`。用 `--model-name` 指定模型版本的附件名称，默认是 `FasterRCNN`。同时打包两种格式时，ONNX 清单必须匹配权重哈希。这个命令打包已有模型文件，应用支持 Faster R-CNN 权重及其导出的 ONNX 格式。
 
@@ -40,6 +40,10 @@ python tools/package_release.py --kind portable --edition cuda --runtime C:\buil
 dist/
   KeyPressDetection-Source.zip
   KeyPressDetection-CUDA-Windows-x64-Portable.zip
+  KeyPressDetection-CUDA-Windows-x64-Portable.zip.part001
+  KeyPressDetection-CUDA-Windows-x64-Portable.zip.part002
+  KeyPressDetection-CUDA-Windows-x64-Portable.zip.parts.json
+  join-release.cmd
   KeyPressDetection-DirectML-Windows-x64-Portable.zip
   KeyPressDetection-Model-FasterRCNN-ONNX.zip
   KeyPressDetection-Model-FasterRCNN-PyTorch.zip
