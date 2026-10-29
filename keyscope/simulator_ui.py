@@ -9,6 +9,7 @@ from .score import read_score, plan_score, play_events, Event
 from .simulator_launch import list_scores, is_admin
 from .keyboard import Keyboard, playback_lock
 from .simulator_settings import HOTKEYS, KeyEdge, read_hotkeys, save_hotkeys
+from .simulator_theme import COLORS, apply_theme
 
 from .localization import LABELS, LANGUAGE_NAMES
 
@@ -37,23 +38,15 @@ class Simulator:
         self.speed, self.hold, self.merge, self.countdown = [tk.StringVar(value=s) for s in ('1.0', '40', '80', '3')]
         root.geometry('900x680')
         root.minsize(760, 620)
-        root.configure(bg='#f5f3ee')
-        style = ttk.Style(root)
-        style.theme_use('clam')
-        style.configure('.', background='#f5f3ee', foreground='#292925', font=('Segoe UI', 10))
-        style.configure('TButton', padding=(12, 7), borderwidth=1)
-        style.configure('TEntry', fieldbackground='#ffffff', padding=6)
-        style.configure('TCombobox', fieldbackground='#ffffff', padding=5)
-        style.configure('Start.TButton', background='#aa5d45', foreground='white')
-        style.map('Start.TButton', background=[('active', '#914a35'), ('disabled', '#c4b5ac')])
+        apply_theme(root)
         body = ttk.Frame(root, padding=22)
         body.pack(fill='both', expand=True)
         body.columnconfigure(0, weight=1)
         body.rowconfigure(9, weight=1)
         top = ttk.Frame(body); top.grid(row=0, column=0, sticky='ew', pady=(0,18))
-        self.status_label = ttk.Label(top); self.status_label.pack(side='left')
+        self.status_label = ttk.Label(top,style='Status.TLabel'); self.status_label.pack(side='left')
         self.lang_button = ttk.Button(top, command=self.toggle_language, width=8); self.lang_button.pack(side='right')
-        self.permission_label = ttk.Label(top); self.permission_label.pack(side='right', padx=16)
+        self.permission_label = ttk.Label(top,style='Muted.TLabel'); self.permission_label.pack(side='right', padx=16)
         self.button(top,'settings',self.open_settings,controlled=False).pack(side='right')
         self.label(body, 'directory').grid(row=1, column=0, sticky='w')
         pathrow = ttk.Frame(body); pathrow.grid(row=2, column=0, sticky='ew', pady=(5,14)); pathrow.columnconfigure(0,weight=1)
@@ -65,7 +58,7 @@ class Simulator:
         self.select=ttk.Combobox(scorerow,state='readonly'); self.select.grid(row=0,column=0,sticky='ew'); self.controls.append(self.select)
         self.select.bind('<<ComboboxSelected>>',lambda e:self.load(self.files[self.select.current()]['path']))
         self.button(scorerow,'open',self.open_file).grid(row=0,column=1,padx=(8,0))
-        self.info=ttk.Label(body); self.info.grid(row=5,column=0,sticky='w',pady=(0,16))
+        self.info=ttk.Label(body,style='Muted.TLabel'); self.info.grid(row=5,column=0,sticky='w',pady=(0,16))
         options=ttk.Frame(body); options.grid(row=6,column=0,sticky='ew')
         for column,(key,variable) in enumerate((('speed',self.speed),('hold',self.hold),('merge',self.merge),('countdown',self.countdown))):
             options.columnconfigure(column,weight=1)
@@ -75,12 +68,16 @@ class Simulator:
         self.mode=ttk.Combobox(options,state='readonly',width=24); self.mode.grid(row=2,column=1,columnspan=2,sticky='ew',padx=(0,10)); self.controls.append(self.mode)
         actions=ttk.Frame(body); actions.grid(row=7,column=0,sticky='ew',pady=(18,8))
         self.start_button=self.button(actions,'start',self.toggle_playback,controlled=False,style='Start.TButton'); self.start_button.pack(side='left')
-        self.stop_button=self.button(actions,'stop',lambda:self.stop.set(),controlled=False); self.stop_button.pack(side='left',padx=8); self.stop_button.state(['disabled'])
+        self.stop_button=self.button(actions,'stop',lambda:self.stop.set(),controlled=False,style='Stop.TButton'); self.stop_button.pack(side='left',padx=8); self.stop_button.state(['disabled'])
         self.elapsed=ttk.Label(actions,text='0.00 s'); self.elapsed.pack(side='right')
-        self.hint=ttk.Label(body,wraplength=810); self.hint.grid(row=8,column=0,sticky='w',pady=(0,12))
+        self.hint=ttk.Label(body,wraplength=810,style='Muted.TLabel'); self.hint.grid(row=8,column=0,sticky='w',pady=(0,12))
         logframe=ttk.Frame(body); logframe.grid(row=9,column=0,sticky='nsew'); logframe.columnconfigure(0,weight=1); logframe.rowconfigure(1,weight=1)
         self.label(logframe,'log').grid(row=0,column=0,sticky='w',pady=(0,5))
-        self.log_widget=tk.Text(logframe,height=7,wrap='word',state='disabled',bg='#eeece6',fg='#44443e',relief='flat',font=('Consolas',9),padx=10,pady=8)
+        self.log_widget=tk.Text(logframe,height=7,wrap='word',state='disabled',
+            bg=COLORS['slate_900'],fg=COLORS['nav_text'],insertbackground=COLORS['surface'],
+            selectbackground=COLORS['highlight_dark'],selectforeground=COLORS['surface'],
+            highlightthickness=1,highlightbackground=COLORS['line'],highlightcolor=COLORS['highlight'],
+            relief='flat',font=('Consolas',9),padx=10,pady=8)
         self.log_widget.grid(row=1,column=0,sticky='nsew')
         scroll=ttk.Scrollbar(logframe,command=self.log_widget.yview); scroll.grid(row=1,column=1,sticky='ns'); self.log_widget.configure(yscrollcommand=scroll.set)
         for variable in (self.speed,self.hold,self.merge): variable.trace_add('write',lambda *args:self.render_info())
@@ -102,7 +99,7 @@ class Simulator:
     def stop_hotkey(self): return self.hotkeys[1]
 
     def label(self,parent,key):
-        widget=ttk.Label(parent); self.labels.append((widget,key)); return widget
+        widget=ttk.Label(parent,style='Muted.TLabel'); self.labels.append((widget,key)); return widget
 
     def button(self,parent,key,command,controlled=True,**kwargs):
         widget=ttk.Button(parent,command=command,**kwargs); self.labels.append((widget,key))
@@ -183,6 +180,7 @@ class Simulator:
         if self.settings_window and self.settings_window.winfo_exists():
             self.settings_window.lift(); return
         window=tk.Toplevel(self.root); self.settings_window=window
+        window.configure(bg=COLORS['paper'])
         window.title(self.t('settings')); window.resizable(False,False); window.transient(self.root)
         panel=ttk.Frame(window,padding=22); panel.pack(fill='both',expand=True)
         ttk.Label(panel,text=self.t('hotkey')).pack(anchor='w')
@@ -191,7 +189,7 @@ class Simulator:
         ttk.Label(panel,text=self.t('stop_hotkey')).pack(anchor='w')
         stop_choice=ttk.Combobox(panel,values=list(HOTKEYS),state='readonly',width=25)
         stop_choice.set(self.stop_hotkey); stop_choice.pack(fill='x',pady=(8,10))
-        error=ttk.Label(panel,foreground='#a13535'); error.pack(anchor='w',pady=(0,10))
+        error=ttk.Label(panel,style='Error.TLabel'); error.pack(anchor='w',pady=(0,10))
         def save():
             try:
                 toggle,stop=choice.get(),stop_choice.get()
@@ -204,7 +202,7 @@ class Simulator:
                 window.destroy(); self.settings_window=None; self.render_state()
             except (OSError,ValueError) as exc:
                 error.configure(text=self.t('settings_error')); self.log(f'ERROR: {exc}')
-        ttk.Button(panel,text=self.t('save'),command=save).pack(anchor='e')
+        ttk.Button(panel,text=self.t('save'),command=save,style='Start.TButton').pack(anchor='e')
 
     def request_pause(self,reason='Paused by user.',automatic=False):
         if self.pause.is_set(): return
