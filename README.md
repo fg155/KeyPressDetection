@@ -196,6 +196,13 @@ Lower resolution and frame skipping (frame stride) can both miss short notes. Tr
 </details>
 
 <details>
+<summary>What if the same note is detected more than once?</summary>
+
+Try increasing **Same-key debounce** under Advanced to reduce duplicate detections of the same key. Setting it too high can also filter out genuine rapid repeats, causing missed notes.
+
+</details>
+
+<details>
 <summary>The simulator stopped in the middle of a song.</summary>
 
 Switching windows or holding a modifier key pauses playback and releases all keys. Return to the game and press the start/pause shortcut (<kbd>F6</kbd> by default) to resume. Returning focus alone does not resume playback.
